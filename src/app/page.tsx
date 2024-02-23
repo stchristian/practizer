@@ -9,14 +9,14 @@ import MediaButton from "@/app/components/MediaButton";
 import PositionLine from "@/app/components/PositionLine";
 import FilePicker from "@/app/components/FilePicker";
 
-const context = new window.AudioContext();
-
 const calculateTime = (secs: number) => {
   const minutes = Math.floor(secs / 60);
   const seconds = Math.floor(secs % 60);
   const returnedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
   return `${minutes}:${returnedSeconds}`;
 };
+
+let context: AudioContext | null = null;
 
 export default function Home() {
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
@@ -42,6 +42,7 @@ export default function Home() {
   }, [state]);
 
   async function handleFileUploaded(fileUploaded: File) {
+    if (!context) context = new window.AudioContext();
     const arrayBuffer = await fileUploaded.arrayBuffer();
     decodedBuffer.current = await context.decodeAudioData(arrayBuffer);
     setSelectedAudioFile(fileUploaded);
