@@ -2,7 +2,7 @@
 
 import { AudioWaveform } from "@/app/components/AudioWaveform";
 import PositionLine from "@/app/components/PositionLine";
-import { usePositionLineController } from "@/app/usePositionLineController";
+import { usePositionLineController } from "@/app/components/usePositionLineController";
 import React, { useCallback, useImperativeHandle, useMemo, useRef } from "react";
 
 const minutePerScreenWidth = 0.5;
@@ -14,6 +14,7 @@ type AudioTrackProps = {
 
 export type AudioTrackRef = {
   animatePositionLine: (elapsed: number) => void;
+  reset: () => void;
 };
 
 function requireRef<T>(ref: React.MutableRefObject<T> | React.RefObject<T>) {
@@ -88,6 +89,11 @@ export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ on
     () => {
       return {
         animatePositionLine,
+        reset: () => {
+          console.log("reset");
+          const positionLine = requireRef(positionLineRef);
+          positionLine.style.left = "0px";
+        },
       };
     },
     [animatePositionLine]

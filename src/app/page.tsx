@@ -1,9 +1,9 @@
 "use client";
 
-import { useAudioControls } from "@/app/useAudioControls";
+import { useAudioControls } from "@/app/components/useAudioControls";
 import React from "react";
 import { useMemo, useRef, useState } from "react";
-import Audio from "./Audio";
+import Audio from "./components/Audio";
 import MediaButton from "@/app/components/MediaButton";
 import FilePicker from "@/app/components/FilePicker";
 import { AudioTrack, AudioTrackRef } from "@/app/components/AudioTrack";
@@ -66,7 +66,14 @@ export default function Home() {
           onClick={pause}
           disabled={state === "ready" || state === "uninitialized" || state === "paused"}
         />
-        <MediaButton type="stop" onClick={stop} disabled={state === "ready" || state === "uninitialized"} />
+        <MediaButton
+          type="stop"
+          onClick={() => {
+            stop();
+            audioTrackRef.current?.reset();
+          }}
+          disabled={state === "ready" || state === "uninitialized"}
+        />
       </div>
     </main>
   );
