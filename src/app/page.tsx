@@ -1,13 +1,12 @@
 "use client";
 
-import { AudioWaveform } from "@/AudioWaveform";
 import { useAudioControls } from "@/app/useAudioControls";
-import React, { useEffect } from "react";
+import React from "react";
 import { useMemo, useRef, useState } from "react";
 import Audio from "./Audio";
 import MediaButton from "@/app/components/MediaButton";
-import PositionLine from "@/app/components/PositionLine";
 import FilePicker from "@/app/components/FilePicker";
+import { AudioTrack, AudioTrackRef } from "@/app/components/AudioTrack";
 
 const calculateTime = (secs: number) => {
   const minutes = Math.floor(secs / 60);
@@ -20,26 +19,18 @@ let context: AudioContext | null = null;
 
 export default function Home() {
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const currentTimeRef = useRef<HTMLSpanElement>(null);
-  const positionLineRef = useRef<HTMLDivElement>(null);
   const decodedBuffer = useRef<AudioBuffer | null>(null);
+  const audioTrackRef = useRef<AudioTrackRef | null>(null);
 
-  const { play, pause, state, metadata, audioElement, stop } = useAudioControls({
+  const { play, pause, state, metadata, audioElement, stop, seek } = useAudioControls({
     whilePlaying(elapsedTime) {
-      const positionLineOffset = containerRef.current!.scrollWidth * (elapsedTime / metadata!.duration);
-      positionLineRef.current!.style.left = `${positionLineOffset}px`;
+      // console.log("whilePlaying()", elapsedTime, metadata?.duration);
 
+      audioTrackRef.current?.animatePositionLine(elapsedTime);
       currentTimeRef.current!.textContent = calculateTime(elapsedTime);
     },
   });
-
-  useEffect(() => {
-    if (state === "ready") {
-      positionLineRef.current!.style.left = `0px`;
-    }
-  }, [state]);
 
   async function handleFileUploaded(fileUploaded: File) {
     if (!context) context = new window.AudioContext();
@@ -66,13 +57,10 @@ export default function Home() {
           <span ref={currentTimeRef}></span> / {calculateTime(metadata!.duration)}
         </p>
       )}
-      <div className="relative bg-slate-200 overflow-scroll max-w-full" ref={containerRef}>
-        {decodedBuffer.current && <AudioWaveform audioBuffer={decodedBuffer.current} />}
-        <PositionLine ref={positionLineRef} />
-      </div>
 
+      {metadata && <AudioTrack buffer={decodedBuffer.current!} onSeek={seek} ref={audioTrackRef} />}
       <div className="flex gap-4">
-        <MediaButton type="play" onClick={play} disabled={state === "playing" || state === "uninitialized"} />
+        <MediaButton type="play" onClick={() => play()} disabled={state === "playing" || state === "uninitialized"} />
         <MediaButton
           type="pause"
           onClick={pause}

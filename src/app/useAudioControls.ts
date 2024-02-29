@@ -17,8 +17,11 @@ type Pause = {
 type Stop = {
   type: "STOP";
 };
+type Finished = {
+  type: "FINISHED";
+};
 
-type Actions = LoadAudio | Play | Pause | Stop;
+type Actions = LoadAudio | Play | Pause | Stop | Finished;
 
 type AudioControlState = {
   state: AudioState;
@@ -38,8 +41,10 @@ function reducer(prevState: AudioControlState, action: Actions): AudioControlSta
       return { ...prevState, state: "playing" };
     case "PAUSE":
       return { ...prevState, state: "paused", pausedAt: action.payload.pausedAt };
-    case "PAUSE":
+    case "STOP":
       return { ...prevState, state: "ready", pausedAt: 0 };
+    case "FINISHED":
+      return { ...prevState, state: "finished", pausedAt: 0 };
     default:
       return prevState;
   }
@@ -62,7 +67,15 @@ export function useAudioControls(options: { whilePlaying?: (elapsedTime: number)
     return audioElementRef.current!;
   }
 
-  function play() {
+  function seek(to: number) {
+    getAudioElement().currentTime = to;
+  }
+
+  function play(from?: number) {
+    if (typeof from !== "undefined") {
+      // TODO check value
+      getAudioElement().currentTime = from;
+    }
     getAudioElement().play();
     playAnimationIfAny();
     dispatch({
@@ -100,6 +113,13 @@ export function useAudioControls(options: { whilePlaying?: (elapsedTime: number)
           },
         });
       });
+      element.addEventListener("ended", () => {
+        console.log("ENDED");
+        cancelAnimationFrame(animationRef.current!);
+        dispatch({
+          type: "FINISHED",
+        });
+      });
       audioElementRef.current = element;
     },
     [dispatch]
@@ -109,6 +129,7 @@ export function useAudioControls(options: { whilePlaying?: (elapsedTime: number)
     play,
     pause,
     stop,
+    seek,
     audioElement: loadAudioElement,
     ...audioState,
   };
