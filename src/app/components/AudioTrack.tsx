@@ -90,7 +90,6 @@ export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ on
       return {
         animatePositionLine,
         reset: () => {
-          console.log("reset");
           const positionLine = requireRef(positionLineRef);
           positionLine.style.left = "0px";
         },

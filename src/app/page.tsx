@@ -28,9 +28,14 @@ export default function Home() {
       // console.log("whilePlaying()", elapsedTime, metadata?.duration);
 
       audioTrackRef.current?.animatePositionLine(elapsedTime);
-      currentTimeRef.current!.textContent = calculateTime(elapsedTime);
+
+      updateTime(elapsedTime);
     },
   });
+
+  function updateTime(elapsedTime: number) {
+    currentTimeRef.current!.textContent = calculateTime(elapsedTime);
+  }
 
   async function handleFileUploaded(fileUploaded: File) {
     if (!context) context = new window.AudioContext();
@@ -47,34 +52,56 @@ export default function Home() {
   }, [selectedAudioFile]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center gap-4 justify-center overflow-hidden">
-      {selectedAudioFile && <h1>{selectedAudioFile.name}</h1>}
-      {!selectedAudioFile && <FilePicker onFileUpload={handleFileUploaded} />}
-
-      {fileObjectUrl && <Audio src={fileObjectUrl} ref={audioElement} />}
-      {state !== "uninitialized" && (
-        <p>
-          <span ref={currentTimeRef}></span> / {calculateTime(metadata!.duration)}
-        </p>
+    <main className="min-h-screen overflow-hidden">
+      {!selectedAudioFile && (
+        <div className="flex items-center gap-4 justify-center mt-52">
+          <FilePicker onFileUpload={handleFileUploaded} />
+        </div>
       )}
 
-      {metadata && <AudioTrack buffer={decodedBuffer.current!} onSeek={seek} ref={audioTrackRef} />}
-      <div className="flex gap-4">
-        <MediaButton type="play" onClick={() => play()} disabled={state === "playing" || state === "uninitialized"} />
-        <MediaButton
-          type="pause"
-          onClick={pause}
-          disabled={state === "ready" || state === "uninitialized" || state === "paused"}
-        />
-        <MediaButton
-          type="stop"
-          onClick={() => {
-            stop();
-            audioTrackRef.current?.reset();
-          }}
-          disabled={state === "ready" || state === "uninitialized"}
-        />
-      </div>
+      {selectedAudioFile && (
+        <>
+          {fileObjectUrl && <Audio src={fileObjectUrl} ref={audioElement} />}
+          <div className="flex flex-row justify-between px-2 py-4 mt-52">
+            <h1 className="font-bold text-lg">{selectedAudioFile.name}</h1>
+            {state !== "uninitialized" && (
+              <p>
+                <span ref={currentTimeRef}>0:00</span> / {calculateTime(metadata!.duration)}
+              </p>
+            )}
+          </div>
+          {metadata && (
+            <AudioTrack
+              buffer={decodedBuffer.current!}
+              onSeek={(to) => {
+                seek(to);
+                updateTime(to);
+              }}
+              ref={audioTrackRef}
+            />
+          )}
+          <div className="flex gap-4 px-2 py-4">
+            <MediaButton
+              type="play"
+              onClick={() => play()}
+              disabled={state === "playing" || state === "uninitialized"}
+            />
+            <MediaButton
+              type="pause"
+              onClick={pause}
+              disabled={state === "ready" || state === "uninitialized" || state === "paused"}
+            />
+            <MediaButton
+              type="stop"
+              onClick={() => {
+                stop();
+                audioTrackRef.current?.reset();
+              }}
+              disabled={state === "ready" || state === "uninitialized"}
+            />
+          </div>
+        </>
+      )}
     </main>
   );
 }
