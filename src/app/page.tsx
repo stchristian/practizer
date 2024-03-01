@@ -7,6 +7,7 @@ import Audio from "./components/Audio";
 import MediaButton from "@/app/components/MediaButton";
 import FilePicker from "@/app/components/FilePicker";
 import { AudioTrack, AudioTrackRef } from "@/app/components/AudioTrack";
+import { TimeDisplay, TimeDisplayRef } from "@/app/components/TimeDisplay";
 
 const calculateTime = (secs: number) => {
   const minutes = Math.floor(secs / 60);
@@ -19,7 +20,7 @@ let context: AudioContext | null = null;
 
 export default function Home() {
   const [selectedAudioFile, setSelectedAudioFile] = useState<File | null>(null);
-  const currentTimeRef = useRef<HTMLSpanElement>(null);
+  const currentTimeRef = useRef<TimeDisplayRef>(null);
   const decodedBuffer = useRef<AudioBuffer | null>(null);
   const audioTrackRef = useRef<AudioTrackRef | null>(null);
 
@@ -29,13 +30,9 @@ export default function Home() {
 
       audioTrackRef.current?.animatePositionLine(elapsedTime);
 
-      updateTime(elapsedTime);
+      currentTimeRef.current!.updateCurrentTime(elapsedTime);
     },
   });
-
-  function updateTime(elapsedTime: number) {
-    currentTimeRef.current!.textContent = calculateTime(elapsedTime);
-  }
 
   async function handleFileUploaded(fileUploaded: File) {
     if (!context) context = new window.AudioContext();
@@ -64,18 +61,14 @@ export default function Home() {
           {fileObjectUrl && <Audio src={fileObjectUrl} ref={audioElement} />}
           <div className="flex flex-row justify-between px-2 py-4 mt-52">
             <h1 className="font-bold text-lg">{selectedAudioFile.name}</h1>
-            {state !== "uninitialized" && (
-              <p>
-                <span ref={currentTimeRef}>0:00</span> / {calculateTime(metadata!.duration)}
-              </p>
-            )}
+            {state !== "uninitialized" && <TimeDisplay duration={metadata!.duration} ref={currentTimeRef} />}
           </div>
           {metadata && (
             <AudioTrack
               buffer={decodedBuffer.current!}
               onSeek={(to) => {
                 seek(to);
-                updateTime(to);
+                currentTimeRef.current!.updateCurrentTime(to);
               }}
               ref={audioTrackRef}
             />
