@@ -2,8 +2,10 @@
 
 import { AudioWaveform } from "@/app/components/AudioWaveform";
 import PositionLine from "@/app/components/PositionLine";
+import { useAutoScroll } from "@/app/components/useAutoScroll";
 import { usePositionLineController } from "@/app/components/usePositionLineController";
-import React, { useCallback, useImperativeHandle, useMemo, useRef } from "react";
+import { requireRef } from "@/app/utils";
+import React, { useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 const minutePerScreenWidth = 0.5;
 
@@ -17,17 +19,8 @@ export type AudioTrackRef = {
   reset: () => void;
 };
 
-function requireRef<T>(ref: React.MutableRefObject<T> | React.RefObject<T>) {
-  if (!ref.current) {
-    throw new Error(`ref.current has no value.`);
-  }
-  return ref.current;
-}
-
 export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ onSeek, buffer }, ref) => {
   const positionLineRef = useRef<HTMLDivElement | null>(null);
-  const userScrolling = useRef(false);
-
   const duration = buffer.duration;
 
   const waveformWidth = useMemo(() => ((duration / 60) * window.innerWidth) / minutePerScreenWidth, [duration]);
@@ -40,15 +33,7 @@ export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ on
     },
   });
 
-  const scrollForward = useCallback(() => {
-    const container = requireRef(containerRef);
-
-    const remainingScrollWidth = container.scrollWidth - window.innerWidth - container.scrollLeft;
-    container.dataset.autoScrolling = "true";
-    container.scrollBy({
-      left: Math.min(window.innerWidth / 2, remainingScrollWidth),
-    });
-  }, [containerRef]);
+  const { scrollForward, userScrolled, handleScroll } = useAutoScroll({ containerRef });
 
   const isItScrolledToTheEnd = useCallback(() => {
     const container = requireRef(containerRef);
@@ -65,13 +50,13 @@ export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ on
       const positionLineOffset = container.scrollWidth * (elapsed / duration);
       const viewportX = positionLine.getBoundingClientRect().left;
 
-      if (isCloseToRightEdgeOfScreen(viewportX) && !userScrolling.current && !isItScrolledToTheEnd()) {
+      if (isCloseToRightEdgeOfScreen(viewportX) && !userScrolled && !isItScrolledToTheEnd()) {
         scrollForward();
       }
 
       positionLine.style.left = `${positionLineOffset}px`;
     },
-    [containerRef, duration, scrollForward, isItScrolledToTheEnd, isCloseToRightEdgeOfScreen]
+    [containerRef, duration, scrollForward, isItScrolledToTheEnd, isCloseToRightEdgeOfScreen, userScrolled]
   );
 
   const handleDoubleClick: React.MouseEventHandler<HTMLDivElement> = useCallback(
@@ -103,11 +88,7 @@ export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ on
       className="relative bg-slate-200 overflow-scroll max-w-full"
       ref={containerRef}
       onDoubleClick={handleDoubleClick}
-      onScroll={(e) => {
-        if (e.currentTarget.dataset.autoScrolling !== "true") {
-          userScrolling.current = true;
-        }
-      }}
+      onScroll={handleScroll}
     >
       <AudioWaveform audioBuffer={buffer} width={waveformWidth} height={waveformHeight} />
       <div className="absolute top-0 bottom-0 overflow-hidden" style={{ width: waveformWidth }}>

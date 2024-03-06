@@ -131,6 +131,7 @@ export function useAudioControls(options: { whilePlaying?: (elapsedTime: number)
     stop,
     seek,
     audioElement: loadAudioElement,
+    audioElementRef,
     ...audioState,
   };
 }
