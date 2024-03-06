@@ -9,13 +9,6 @@ import FilePicker from "@/app/components/FilePicker";
 import { AudioTrack, AudioTrackRef } from "@/app/components/AudioTrack";
 import { TimeDisplay, TimeDisplayRef } from "@/app/components/TimeDisplay";
 
-const calculateTime = (secs: number) => {
-  const minutes = Math.floor(secs / 60);
-  const seconds = Math.floor(secs % 60);
-  const returnedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
-  return `${minutes}:${returnedSeconds}`;
-};
-
 let context: AudioContext | null = null;
 
 export default function Home() {
@@ -23,8 +16,9 @@ export default function Home() {
   const currentTimeRef = useRef<TimeDisplayRef>(null);
   const decodedBuffer = useRef<AudioBuffer | null>(null);
   const audioTrackRef = useRef<AudioTrackRef | null>(null);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
-  const { play, pause, state, metadata, audioElement, stop, seek } = useAudioControls({
+  const { play, pause, state, metadata, audioElement, stop, seek, audioElementRef } = useAudioControls({
     whilePlaying(elapsedTime) {
       // console.log("whilePlaying()", elapsedTime, metadata?.duration);
 
@@ -59,6 +53,20 @@ export default function Home() {
       {selectedAudioFile && (
         <>
           {fileObjectUrl && <Audio src={fileObjectUrl} ref={audioElement} />}
+          <label>
+            Playback rate
+            <input
+              type="range"
+              value={playbackRate}
+              min="0.25"
+              max="1"
+              step="0.01"
+              onChange={(e) => {
+                setPlaybackRate(parseFloat(e.target.value));
+                audioElementRef.current!.playbackRate = parseFloat(e.target.value);
+              }}
+            ></input>
+          </label>
           <div className="flex flex-row justify-between px-2 py-4 mt-52">
             <h1 className="font-bold text-lg">{selectedAudioFile.name}</h1>
             {state !== "uninitialized" && <TimeDisplay duration={metadata!.duration} ref={currentTimeRef} />}
