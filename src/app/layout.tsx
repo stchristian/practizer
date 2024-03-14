@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Roboto_Mono } from "next/font/google";
 import "./globals.css";
-
-const robotoMono = Roboto_Mono({ subsets: ["latin"] });
+import PlayerProvider from "@/app/components/PlayerContext";
+import { robotoSlab } from "@/app/fonts";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -16,7 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={robotoMono.className}>{children}</body>
+      <PlayerProvider>
+        <body className={robotoSlab.className}>{children}</body>
+      </PlayerProvider>
     </html>
   );
 }

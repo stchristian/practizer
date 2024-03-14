@@ -1,3 +1,4 @@
+import { robotoMono } from "@/app/fonts";
 import React, { useRef } from "react";
 
 type Second = number;
@@ -28,7 +29,7 @@ export const TimeDisplay = React.forwardRef<TimeDisplayRef, TimeDisplayProps>(({
   }));
 
   return (
-    <div>
+    <div className={robotoMono.className}>
       <span ref={currentTimeRef}>{formatTime(0, precision)}</span>
       <span> / </span>
       <span>{formatTime(duration, precision)}</span>

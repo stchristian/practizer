@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useReducer, useRef } from "react";
+import { requireRef } from "@/app/utils";
+import { useCallback, useEffect, useReducer, useRef } from "react";
 
 type AudioState = "uninitialized" | "ready" | "playing" | "paused" | "finished";
 type Metadata = {
@@ -55,51 +56,77 @@ export function useAudioControls(options: { whilePlaying?: (elapsedTime: number)
   const animationRef = useRef<number | null>(null);
   const [audioState, dispatch] = useReducer(reducer, initialState);
 
-  function playAnimationIfAny() {
-    if (options.whilePlaying) {
-      options.whilePlaying(audioElementRef.current!.currentTime);
-      animationRef.current = requestAnimationFrame(playAnimationIfAny);
-    }
-  }
+  const playAnimationIfAny = useCallback(
+    function () {
+      if (options.whilePlaying) {
+        options.whilePlaying(requireRef(audioElementRef).currentTime);
+        animationRef.current = requestAnimationFrame(playAnimationIfAny);
+      }
+    },
+    [options]
+  );
 
-  function getAudioElement() {
-    if (audioState.state === "uninitialized") throw new Error("Audio is not initialized");
-    return audioElementRef.current!;
-  }
+  const play = useCallback(
+    function (from?: number) {
+      if (typeof from !== "undefined") {
+        // TODO check value
+        requireRef(audioElementRef).currentTime = from;
+      }
 
-  function seek(to: number) {
-    getAudioElement().currentTime = to;
-  }
+      requireRef(audioElementRef).play();
+      playAnimationIfAny();
+      dispatch({
+        type: "PLAY",
+      });
+    },
+    [playAnimationIfAny]
+  );
 
-  function play(from?: number) {
-    if (typeof from !== "undefined") {
-      // TODO check value
-      getAudioElement().currentTime = from;
-    }
-    getAudioElement().play();
-    playAnimationIfAny();
-    dispatch({
-      type: "PLAY",
-    });
-  }
-
-  function pause() {
-    getAudioElement().pause();
+  const pause = useCallback(function () {
+    requireRef(audioElementRef).pause();
     cancelAnimationFrame(animationRef.current!);
     dispatch({
       type: "PAUSE",
       payload: {
-        pausedAt: getAudioElement().currentTime,
+        pausedAt: requireRef(audioElementRef).currentTime,
       },
     });
-  }
+  }, []);
 
-  function stop() {
-    getAudioElement().load();
+  const stop = useCallback(function () {
+    requireRef(audioElementRef).load();
     dispatch({
       type: "STOP",
     });
     cancelAnimationFrame(animationRef.current!);
+  }, []);
+
+  useEffect(() => {
+    function handleKeydown(e: KeyboardEvent) {
+      switch (e.key) {
+        case " ":
+          if (audioState.state === "playing") {
+            pause();
+          } else {
+            play();
+          }
+          break;
+        case "r":
+          stop();
+        default:
+          break;
+      }
+    }
+
+    document.addEventListener("keydown", handleKeydown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeydown);
+    };
+  }, [pause, play, audioState.state, stop]);
+
+  function seek(to: number) {
+    requireRef(audioElementRef).currentTime = to;
   }
 
   const loadAudioElement = useCallback(
@@ -112,6 +139,9 @@ export function useAudioControls(options: { whilePlaying?: (elapsedTime: number)
             duration: element.duration,
           },
         });
+      });
+      element.addEventListener("durationchange", () => {
+        console.log("DURATION CHANGE");
       });
       element.addEventListener("ended", () => {
         console.log("ENDED");

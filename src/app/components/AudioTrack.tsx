@@ -12,6 +12,7 @@ const minutePerScreenWidth = 0.5;
 type AudioTrackProps = {
   onSeek: (to: number) => void;
   buffer: AudioBuffer;
+  zoomLevel?: number;
 };
 
 export type AudioTrackRef = {
@@ -19,11 +20,14 @@ export type AudioTrackRef = {
   reset: () => void;
 };
 
-export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ onSeek, buffer }, ref) => {
+export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ onSeek, buffer, zoomLevel = 1 }, ref) => {
   const positionLineRef = useRef<HTMLDivElement | null>(null);
   const duration = buffer.duration;
 
-  const waveformWidth = useMemo(() => ((duration / 60) * window.innerWidth) / minutePerScreenWidth, [duration]);
+  const waveformWidth = useMemo(
+    () => (((duration / 60) * window.innerWidth) / minutePerScreenWidth) * zoomLevel,
+    [duration, zoomLevel]
+  );
   const waveformHeight = 200;
 
   const { loadPositionLine, containerRef, isCloseToRightEdgeOfScreen } = usePositionLineController({
@@ -85,7 +89,7 @@ export const AudioTrack = React.forwardRef<AudioTrackRef, AudioTrackProps>(({ on
 
   return (
     <div
-      className="relative bg-slate-200 overflow-scroll max-w-full"
+      className="relative border-y border-gray-800 overflow-scroll max-w-full"
       ref={containerRef}
       onDoubleClick={handleDoubleClick}
       onScroll={handleScroll}
