@@ -1,5 +1,5 @@
 "use client";
-import { requireRef } from "@/app/utils";
+import { requireRef } from "@/app/utils/ref";
 import { useCallback, useEffect, useReducer, useRef } from "react";
 
 type AudioState = "uninitialized" | "ready" | "playing" | "paused" | "finished";

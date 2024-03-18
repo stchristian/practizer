@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { usePlayerContext } from "@/app/components/PlayerContext";
+import { useAppStateContext } from "@/app/components/AppState/AppState.context";
 import Audio from "@/app/components/Audio";
 import { TimeDisplay, TimeDisplayRef } from "@/app/components/TimeDisplay";
 import { AudioTrack, AudioTrackRef } from "@/app/components/AudioTrack";
@@ -10,12 +10,13 @@ import TempoSlider from "@/app/components/TempoSlider/TempoSlider";
 import { redirect } from "next/navigation";
 
 export default function Player() {
-  const { selectedAudioFile } = usePlayerContext();
-  if (!selectedAudioFile) {
+  const { appState } = useAppStateContext();
+  if (!appState.selectedAudioFile) {
     // Redirect should be used on server side but since client components are also
     // prerendered (SSR), this works. Client side navigation should never arrive in this branch
     redirect("/");
   }
+  const { selectedAudioFile } = appState;
   const currentTimeRef = useRef<TimeDisplayRef>(null);
   const [decodedBuffer, setDecodedBuffer] = useState<AudioBuffer | null>(null);
   const audioTrackRef = useRef<AudioTrackRef | null>(null);
@@ -45,24 +46,26 @@ export default function Player() {
       {fileObjectUrl && <Audio src={fileObjectUrl} ref={audioElement} />}
       <div className="flex flex-row justify-between p-4 mt-52">
         <h1 className="font-bold text-lg">{selectedAudioFile.name}</h1>
-        {state !== "uninitialized" && <TimeDisplay duration={metadata!.duration} ref={currentTimeRef} />}
-        <div>
-          <button
-            className="px-4 py-2 border border-slate-500"
-            onClick={() => {
-              setZoomLevel((zoomLevel) => zoomLevel * 0.9);
-            }}
-          >
-            -
-          </button>
-          <button
-            className="px-4 py-2 border border-slate-500"
-            onClick={() => {
-              setZoomLevel((zoomLevel) => zoomLevel * 1.1);
-            }}
-          >
-            +
-          </button>
+        <div className="flex flex-row items-center gap-4">
+          {state !== "uninitialized" && <TimeDisplay duration={metadata!.duration} ref={currentTimeRef} />}
+          <div>
+            <button
+              className="px-4 py-2 border border-slate-500"
+              onClick={() => {
+                setZoomLevel((zoomLevel) => zoomLevel * 0.9);
+              }}
+            >
+              -
+            </button>
+            <button
+              className="px-4 py-2 border border-slate-500"
+              onClick={() => {
+                setZoomLevel((zoomLevel) => zoomLevel * 1.1);
+              }}
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
       {metadata && decodedBuffer && (

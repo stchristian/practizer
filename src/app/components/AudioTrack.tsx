@@ -4,7 +4,7 @@ import { AudioWaveform } from "@/app/components/AudioWaveform";
 import PositionLine from "@/app/components/PositionLine";
 import { useAutoScroll } from "@/app/components/useAutoScroll";
 import { usePositionLineController } from "@/app/components/usePositionLineController";
-import { requireRef } from "@/app/utils";
+import { requireRef } from "@/app/utils/ref";
 import React, { useCallback, useImperativeHandle, useMemo, useRef, useState } from "react";
 
 const minutePerScreenWidth = 0.5;

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import PlayerProvider from "@/app/components/PlayerContext";
+import AppStateProvider from "@/app/components/AppState/AppState.context";
 import { robotoSlab } from "@/app/fonts";
 
 export const metadata: Metadata = {
@@ -15,9 +15,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <PlayerProvider>
+      <AppStateProvider>
         <body className={robotoSlab.className}>{children}</body>
-      </PlayerProvider>
+      </AppStateProvider>
     </html>
   );
 }
